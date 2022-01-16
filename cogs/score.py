@@ -97,6 +97,8 @@ class ScoreView(disnake.ui.View):
         e.add_field(
             'Прогресс', f'```\n{random_chr(0x2580, 0x259F):25}| ?lvl (?%)\n```', inline=False
         )
+        return e
+
     async def interaction_check(self, interaction: disnake.MessageInteraction) -> bool:
         if interaction.author == self.init_inter.author:
             return True
