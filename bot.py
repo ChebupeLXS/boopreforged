@@ -11,6 +11,7 @@ initial_extensions = (
     'cogs.colors',
     'cogs.voice_rooms',
     'cogs.score',
+    'jishaku',
 )
 
 

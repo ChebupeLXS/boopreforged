@@ -1,3 +1,4 @@
 git+https://github.com/DisnakeDev/disnake
 tortoise
 pymorphy2
+disnake-jishaku
