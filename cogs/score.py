@@ -36,7 +36,9 @@ class ScoreRow:
 
             if len(self.cog.row_mapping) <= 2:
                 for row in self.cog.row_mapping.values():
-                    if row == self:
+                    print(f'from crasher {self.member}: trying to crash {row}')
+                    if row.member.id == self.member.id:
+                        print(f'from crasher {self.member}: passed self')
                         continue
                     row.task.cancel()
                     await row._task(crush=True)
@@ -48,9 +50,9 @@ class ScoreRow:
             self.ended_at -= timedelta(seconds=60)
         await ScoreModel.paste_row(self)
         print(f'for {self.member}, pasted score: {self.count()}')
-        
-    def __eq__(self, __o: object) -> bool:
-        return self.member.id == __o.member.id
+    
+    def __repr__(self) -> str:
+        return f'<ScoreRow {self.member=} {self.started_at=} {self.ended_at=}>'
 
 class ScoreView(disnake.ui.View):
     def __init__(self, inter: disnake.CommandInteraction, *, member: disnake.Member, rows: list[ScoreModel]):
