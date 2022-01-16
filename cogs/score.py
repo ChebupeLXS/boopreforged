@@ -37,7 +37,10 @@ class ScoreRow:
                 member=(await MemberModel.get_or_create(id=self.member.id))[0],
                 score=self.count, started_at=self.started_at, ended_at=self.ended_at
             )
-        print(f'for {self.member}, finished with: {self.count}')
+            print(f'for {self.member}, finished with: {self.count}')
+        else:
+            print(f'for {self.member}, ignored with: {self.count}')
+
 
     async def _task(self):
         print(f'for {self.member}, started task')
