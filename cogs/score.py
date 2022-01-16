@@ -8,7 +8,7 @@ from disnake.ext import commands
 import disnake
 from disnake.utils import utcnow
 
-from db.models import Score as ScoreModel
+from db.models import Score as ScoreModel, Member as MemberModel
 from utils.text import plural, random_chr
 
 if TYPE_CHECKING:
@@ -23,36 +23,42 @@ class ScoreRow:
     task: asyncio.Task = None
     ended_at: datetime = None
 
-    def count(self) -> Optional[int]:
+    @property
+    def count(self) -> int:
         if self.ended_at is None:
-            return 0
+            return 1
         
-        return round((self.ended_at - self.started_at).total_seconds() / 60)
+        return max(round((self.ended_at - self.started_at).total_seconds() / 60), 1)
     
-    async def _task(self, *, crush=False):
-        print(f'for {self.member}, started task with {crush=}')
-        if not crush:
-            await asyncio.sleep(60)
-
-            if len(self.cog.row_mapping) <= 2:
-                for row in self.cog.row_mapping.values():
-                    print(f'from crasher {self.member}: trying to crash {row}')
-                    if row.member.id == self.member.id:
-                        print(f'from crasher {self.member}: passed self')
-                        continue
-                    row.task.cancel()
-                    await row._task(crush=True)
-                    print(f'from {self.member}, crushed: {row.member}')
-        
+    async def finalize(self):
         self.cog.row_mapping.pop(self.member.id)
-        self.ended_at = utcnow() 
-        if not crush:
-            self.ended_at -= timedelta(seconds=60)
-        await ScoreModel.paste_row(self)
-        print(f'for {self.member}, finished with: {self.count()}')
+        await ScoreModel.create(
+            member=(await MemberModel.get_or_create(id=self.member.id))[0],
+            score=self.count, started_at=self.started_at, ended_at=self.ended_at
+        )
+        print(f'for {self.member}, finished with: {self.count}')
+
+    async def _task(self):
+        print(f'for {self.member}, started task')
+        await asyncio.sleep(60)
+
+        if len(self.cog.row_mapping) <= 2:
+            started_at = max([r.started_at for r in self.cog.row_mapping.values()])
+            for row in self.cog.row_mapping.values():
+                row.started_at = started_at
+                print(f'from crasher {self.member}: trying to crash {row}')
+                if row.member.id != self.member.id:
+                    print(f'from crasher {self.member}: passed self')
+                    row.task.cancel()
+                await row.finalize()
+                print(f'from {self.member}, crushed: {row.member}')
+                return
+        
+        self.ended_at = utcnow() - timedelta(seconds=60)
+        await self.finalize()
     
     def __repr__(self) -> str:
-        return f'<ScoreRow {self.member=} {self.started_at=} {self.ended_at=}>'
+        return f'<ScoreRow self.member={self.member} {self.started_at=} {self.ended_at=}>'
 
 class ScoreView(disnake.ui.View):
     def __init__(self, inter: disnake.CommandInteraction, *, member: disnake.Member, rows: list[ScoreModel]):
@@ -121,6 +127,8 @@ class Score(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
         if message.channel.id not in (824997091725017090, 864140290796945418):
+            return
+        if message.author.bot:
             return
 
         if message.author.id not in self.row_mapping:
