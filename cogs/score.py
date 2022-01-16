@@ -115,7 +115,8 @@ class Score(commands.Cog):
         self.bot = bot
         self.row_mapping: dict[int, ScoreRow] = {}
         ScoreRow.cog = self
-    
+
+    @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
         if message.channel.id not in (824997091725017090, 864140290796945418):
             return
