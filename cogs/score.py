@@ -121,11 +121,13 @@ class Score(commands.Cog):
             return
 
         if message.author.id not in self.row_mapping:
+            print(f'creating new row from: {message.channel.id}-{message.id}, for {message.author}')
             row = ScoreRow(message.author, utcnow())
             row.task = self.bot.loop.create_task(row._task())
             self.row_mapping[message.author.id] = row
             return
-
+        
+        print(f'update task: {message.channel.id}-{message.id}, for {message.author}')
         row = self.row_mapping[message.author.id]
         if not row.task.done():
             row.task.cancel()
