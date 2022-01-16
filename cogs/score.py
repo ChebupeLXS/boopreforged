@@ -129,6 +129,11 @@ class Score(commands.Cog):
         self.bot = bot
         self.row_mapping: dict[int, ScoreRow] = {}
         ScoreRow.cog = self
+    
+    def cog_unload(self) -> None:
+        for row in self.row_mapping.values():
+            row.task.cancel()
+            self.bot.loop.create_task(row.finalize())
 
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
