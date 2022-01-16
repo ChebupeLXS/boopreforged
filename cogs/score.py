@@ -47,8 +47,9 @@ class ScoreRow:
         await asyncio.sleep(60)
 
         if len(self.cog.row_mapping) <= 2:
-            started_at = max([r.started_at for r in self.cog.row_mapping.values()])
-            for row in self.cog.row_mapping.values():
+            rows = list(self.cog.row_mapping.values())
+            started_at = max([r.started_at for r in rows])
+            for row in rows:
                 row.started_at = started_at
                 row.ended_at = utcnow()
                 print(f'from crasher {self.member}: trying to crash {row}')
