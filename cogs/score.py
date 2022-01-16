@@ -156,7 +156,7 @@ class Score(commands.Cog):
 
     @score.sub_command()
     async def view(self, inter: disnake.CommandInteraction, member: disnake.Member = commands.param(lambda i: i.author)):
-        rows = await ScoreModel.from_member(member)
+        rows = await ScoreModel.filter(member__id=member.id)
         view = ScoreView(inter, member=member, rows=rows)
         await inter.response.send_message(embed=view.embed(), view=view)
 
