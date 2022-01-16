@@ -74,7 +74,7 @@ class ScoreView(disnake.ui.View):
 
         self.rows = rows
         now = inter.created_at - timedelta(1)
-        self.day_rows = list(filter(lambda x: x.created_at >= now, rows))
+        self.day_rows = list(filter(lambda x: x.started_at >= now, rows))
 
     def embed(self):
         e = disnake.Embed(
