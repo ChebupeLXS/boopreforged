@@ -25,12 +25,12 @@ class ScoreRow:
 
     def count(self) -> Optional[int]:
         if self.ended_at is None:
-            return
+            return 0
         
         return round((self.ended_at - self.started_at).total_seconds() / 60)
     
     async def _task(self, *, crush=False):
-        print(f'started task for: {self.member} with {crush=}')
+        print(f'for {self.member}, started task with {crush=}')
         if not crush:
             await asyncio.sleep(60)
 
@@ -40,14 +40,14 @@ class ScoreRow:
                         continue
                     row.task.cancel()
                     await row._task(crush=True)
-                    print(f'from: {self.member.id}, crushed: {row.member.id}')
+                    print(f'from {self.member}, crushed: {row.member}')
         
         self.cog.row_mapping.pop(self.member.id)
         self.ended_at = utcnow() 
         if not crush:
             self.ended_at -= timedelta(seconds=60)
-        r = await ScoreModel.paste_row(self)
-        print(f'from: {self.member.id}, pasted score: {r.score if r is not None else r}')
+        await ScoreModel.paste_row(self)
+        print(f'for {self.member}, pasted score: {self.count()}')
         
     def __eq__(self, __o: object) -> bool:
         return self.member.id == __o.member.id
@@ -122,13 +122,13 @@ class Score(commands.Cog):
             return
 
         if message.author.id not in self.row_mapping:
-            print(f'creating new row from: {message.channel.id}-{message.id}, for {message.author}')
+            print(f'for {message.author}, new entry: {message.channel.id}-{message.id}')
             row = ScoreRow(message.author, utcnow())
             row.task = self.bot.loop.create_task(row._task())
             self.row_mapping[message.author.id] = row
             return
         
-        print(f'update task: {message.channel.id}-{message.id}, for {message.author}')
+        print(f'for {message.author}, update: {message.channel.id}-{message.id}')
         row = self.row_mapping[message.author.id]
         if not row.task.done():
             row.task.cancel()
