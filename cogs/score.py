@@ -30,6 +30,7 @@ class ScoreRow:
         return round((self.ended_at - self.started_at).total_seconds() / 60)
     
     async def _task(self, *, crush=False):
+        print(f'started task for: {self.member} with {crush=}')
         if not crush:
             await asyncio.sleep(60)
 
@@ -49,7 +50,7 @@ class ScoreRow:
         print(f'from: {self.member.id}, pasted score: {r.score if r is not None else r}')
         
     def __eq__(self, __o: object) -> bool:
-        return self.member == __o.member
+        return self.member.id == __o.member.id
 
 class ScoreView(disnake.ui.View):
     def __init__(self, inter: disnake.CommandInteraction, *, member: disnake.Member, rows: list[ScoreModel]):
@@ -62,7 +63,7 @@ class ScoreView(disnake.ui.View):
         self.day_rows = list(filter(lambda x: x.created_at >= now, rows))
 
     def embed(self):
-        return disnake.Embed(
+        e = disnake.Embed(
             color=0x2f3136,
         ).set_author(
             name=self.member.display_name,
@@ -73,7 +74,13 @@ class ScoreView(disnake.ui.View):
             'Все очки', f'```fix\n# {plural("очко"):{sum([r.score for r in self.rows])}}\n```'
         ).add_field(
             'До следующего уровня', f'```diff\n+ {plural("очко"):0}\n```'
-        ).add_field(
+        )
+        if self.day_rows:
+            e.add_field(
+                'За последние сутки', f'```md\n# {plural("очко"):{sum([r.score for r in self.day_rows])}}',
+                inline=False
+            )
+        e.add_field(
             'Прогресс', f'```\n{random_chr(0x2580, 0x259F):25}| ?lvl (?%)\n```', inline=False
         )
     async def interaction_check(self, interaction: disnake.MessageInteraction) -> bool:

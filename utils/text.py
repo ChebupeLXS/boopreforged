@@ -27,4 +27,4 @@ class random_chr:
         except ValueError:
             raise TypeError(f'format spec {__format_spec!r} must be a numeric')
 
-        return ''.join([chr(random.randint(*self.ab)) for i in range(__format_spec)])
+        return ''.join([chr(random.randint(*self.ab)) for _ in range(__format_spec)])
