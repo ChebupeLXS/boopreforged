@@ -25,7 +25,7 @@ class Score(Model):
     member: ForeignKeyRelation[Member] = ForeignKeyField(
         'models.Member', 'scores'
     )
-    score: IntField()
-    started_at: DatetimeField()
-    ended_at: DatetimeField(auto_now_add=True)
-    dumped: BooleanField(default=False)
+    score = IntField()
+    started_at = DatetimeField()
+    ended_at = DatetimeField(auto_now_add=True)
+    dumped = BooleanField(default=False)
