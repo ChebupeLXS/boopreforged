@@ -50,6 +50,7 @@ class ScoreRow:
             started_at = max([r.started_at for r in self.cog.row_mapping.values()])
             for row in self.cog.row_mapping.values():
                 row.started_at = started_at
+                row.ended_at = utcnow()
                 print(f'from crasher {self.member}: trying to crash {row}')
                 if row.member.id != self.member.id:
                     print(f'from crasher {self.member}: passed self')
