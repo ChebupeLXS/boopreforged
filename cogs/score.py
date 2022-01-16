@@ -49,7 +49,7 @@ class ScoreRow:
         if not crush:
             self.ended_at -= timedelta(seconds=60)
         await ScoreModel.paste_row(self)
-        print(f'for {self.member}, pasted score: {self.count()}')
+        print(f'for {self.member}, finished with: {self.count()}')
     
     def __repr__(self) -> str:
         return f'<ScoreRow {self.member=} {self.started_at=} {self.ended_at=}>'

@@ -38,14 +38,12 @@ class Score(Model):
         return cls.all().filter(member__id=member.id)
     
     @classmethod
-    def paste_row(cls, row: ScoreRow):
+    async def paste_row(cls, row: ScoreRow):
         count = row.count()
         if count is None or count <= 0:
-            async def empty():
-                pass
-            return empty()
-        return cls.create(
-            member=Member.from_member(row.member),
+            return
+        return await cls.create(
+            member=await Member.from_member(row.member),
             score=count,
             started_at=row.started_at,
             ended_at=row.ended_at
