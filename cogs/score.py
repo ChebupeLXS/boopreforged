@@ -135,6 +135,7 @@ class Score(commands.Cog):
     def cog_unload(self) -> None:
         for row in self.row_mapping.values():
             row.task.cancel()
+            row.ended_at = utcnow()
             self.bot.loop.create_task(row.finalize())
 
     @commands.Cog.listener()
