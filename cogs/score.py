@@ -32,10 +32,11 @@ class ScoreRow:
     
     async def finalize(self):
         self.cog.row_mapping.pop(self.member.id)
-        await ScoreModel.create(
-            member=(await MemberModel.get_or_create(id=self.member.id))[0],
-            score=self.count, started_at=self.started_at, ended_at=self.ended_at
-        )
+        if len(self.cog.row_mapping) > 0:
+            await ScoreModel.create(
+                member=(await MemberModel.get_or_create(id=self.member.id))[0],
+                score=self.count, started_at=self.started_at, ended_at=self.ended_at
+            )
         print(f'for {self.member}, finished with: {self.count}')
 
     async def _task(self):
