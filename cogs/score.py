@@ -10,7 +10,7 @@ import disnake
 from disnake.utils import utcnow
 
 from db.models import Score as ScoreModel, Member as MemberModel
-from .utils.text import plural, bar  # type: ignore
+from .utils.text import plural  # type: ignore
 
 if TYPE_CHECKING:
     from bot import Bot
