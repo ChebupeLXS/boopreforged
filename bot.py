@@ -25,8 +25,6 @@ class Bot(commands.Bot):
             ],  # 859290967475879966
             intents=disnake.Intents.all(),
             debug_events=True,
-            reload=True,
-            sync_permissions=True,
         )
         self.startup = disnake.utils.utcnow()
         self.defer_pool: Mapping[int, disnake.Interaction] = {}
