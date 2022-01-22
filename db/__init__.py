@@ -1,14 +1,10 @@
 from tortoise import Tortoise
 
 TORTOISE_ORM = {
-    'apps': {
-        'models': {
-            'models': ['db.models'],
-            'default_connection': 'master'
-        }
-    },
-    'connections': {'master': 'sqlite://db/files/db.sqlite'}
+    "apps": {"models": {"models": ["db.models"], "default_connection": "master"}},
+    "connections": {"master": "sqlite://db/files/db.sqlite"},
 }
+
 
 async def init(reconnect=False, regenerate=False):
     if reconnect:

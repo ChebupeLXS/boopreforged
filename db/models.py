@@ -9,22 +9,18 @@ from tortoise.fields import (
     DatetimeField,
     ForeignKeyRelation,
     ReverseRelation,
-    BooleanField
+    BooleanField,
 )
-import disnake
-if TYPE_CHECKING:
-    from cogs.score import ScoreRow
+
 
 class Member(Model):
     id = BigIntField(pk=True)
 
-    scores: ReverseRelation['Score']
+    scores: ReverseRelation["Score"]
 
 
 class Score(Model):
-    member: ForeignKeyRelation[Member] = ForeignKeyField(
-        'models.Member', 'scores'
-    )
+    member: ForeignKeyRelation[Member] = ForeignKeyField("models.Member", "scores")
     score = IntField()
     started_at = DatetimeField()
     ended_at = DatetimeField(auto_now_add=True)

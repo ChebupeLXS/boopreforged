@@ -9,10 +9,11 @@ import disnake
 from disnake.utils import utcnow
 
 from db.models import Score as ScoreModel, Member as MemberModel
-from utils.text import plural, random_chr
+from .utils.text import plural, random_chr  # type: ignore
 
 if TYPE_CHECKING:
     from bot import Bot
+
 
 @dataclass
 class ScoreRow:
@@ -20,30 +21,27 @@ class ScoreRow:
         cog: Score
     member: disnake.Member
     started_at: datetime
-    task: asyncio.Task = None
-    ended_at: datetime = None
+    task: asyncio.Task = None  # type: ignore
+    ended_at: Optional[datetime] = None
 
     @property
     def count(self) -> int:
         if self.ended_at is None:
-            return 1
-        
-        return max(round((self.ended_at - self.started_at).total_seconds() / 60), 1)
-    
+            return 0
+
+        return max(round((self.ended_at - self.started_at).total_seconds() / 60), 0)
+
     async def finalize(self):
         self.cog.row_mapping.pop(self.member.id)
         if len(self.cog.row_mapping) > 0:
             await ScoreModel.create(
                 member=(await MemberModel.get_or_create(id=self.member.id))[0],
-                score=self.count, started_at=self.started_at, ended_at=self.ended_at
+                score=self.count,
+                started_at=self.started_at,
+                ended_at=self.ended_at,
             )
-            print(f'for {self.member}, finished with: {self.count}')
-        else:
-            print(f'for {self.member}, ignored with: {self.count}')
-
 
     async def _task(self):
-        print(f'for {self.member}, started task')
         await asyncio.sleep(60)
 
         if len(self.cog.row_mapping) <= 2:
@@ -52,22 +50,28 @@ class ScoreRow:
             for row in rows:
                 row.started_at = started_at
                 row.ended_at = utcnow()
-                print(f'from crasher {self.member}: trying to crash {row}')
                 if row.member.id != self.member.id:
-                    print(f'from crasher {self.member}: passed self')
                     row.task.cancel()
                 await row.finalize()
-                print(f'from {self.member}, crushed: {row.member}')
                 return
-        
+
         self.ended_at = utcnow() - timedelta(seconds=60)
         await self.finalize()
-    
+
     def __repr__(self) -> str:
-        return f'<ScoreRow self.member={self.member} {self.started_at=} {self.ended_at=}>'
+        return (
+            f"<ScoreRow self.member={self.member} {self.started_at=} {self.ended_at=}>"
+        )
+
 
 class ScoreView(disnake.ui.View):
-    def __init__(self, inter: disnake.CommandInteraction, *, member: disnake.Member, rows: list[ScoreModel]):
+    def __init__(
+        self,
+        inter: disnake.CommandInteraction,
+        *,
+        member: disnake.Member,
+        rows: list[ScoreModel],
+    ):
         super().__init__(timeout=180)
         self.init_inter = inter
         self.member = member
@@ -77,53 +81,68 @@ class ScoreView(disnake.ui.View):
         self.day_rows = list(filter(lambda x: x.started_at >= now, rows))
 
     def embed(self):
-        e = disnake.Embed(
-            color=0x2f3136,
-        ).set_author(
-            name=self.member.display_name,
-            icon_url=self.member.display_avatar
-        ).add_field(
-            'Уровень', f'```diff\n- x-й уровень\n```'
-        ).add_field(
-            'Все очки', f'```fix\n# {plural("очко"):{sum([r.score for r in self.rows])}}\n```'
-        ).add_field(
-            'До следующего уровня', f'```diff\n+ {plural("очко"):0}\n```'
+        e = (
+            disnake.Embed(
+                color=0x2F3136,
+            )
+            .set_author(
+                name=self.member.display_name, icon_url=self.member.display_avatar
+            )
+            .add_field("Уровень", f"```diff\n- x-й уровень\n```")
+            .add_field(
+                "Все очки",
+                f'```fix\n# {plural("очко"):{sum([r.score for r in self.rows])}}\n```',
+            )
+            .add_field("До следующего уровня", f'```diff\n+ {plural("очко"):0}\n```')
         )
         if self.day_rows:
             e.add_field(
-                'За последние сутки', f'```md\n# {plural("очко"):{sum([r.score for r in self.day_rows])}}',
-                inline=False
+                "За последние сутки",
+                f'```md\n# {plural("очко"):{sum([r.score for r in self.day_rows])}}\n```',
+                inline=False,
             )
         e.add_field(
-            'Прогресс', f'```\n{random_chr(0x2580, 0x259F):25}| ?lvl (?%)\n```', inline=False
+            "Прогресс",
+            f"```\n{random_chr(0x2580, 0x259F):25}| ?lvl (?%)\n```",
+            inline=False,
         )
         return e
 
     async def interaction_check(self, interaction: disnake.MessageInteraction) -> bool:
         if interaction.author == self.init_inter.author:
             return True
-        await interaction.response.send_message('тебе нельзя', ephemeral=True)
-    
-    @disnake.ui.button(label='Index')
-    async def index_button(self, button: disnake.ui.Button, inter: disnake.MessageInteraction):
-        for b in self.children:
-            b.disabled = False
-        button.disabled = True
-        await inter.response.send_message('soon (tm)', ephemeral=True, view=self)
+        await interaction.response.send_message("тебе нельзя", ephemeral=True)
+        return False
 
-    @disnake.ui.button(label='Mouth')
-    async def m_button(self, button: disnake.ui.Button, inter: disnake.MessageInteraction):
+    @disnake.ui.button(label="Index")
+    async def index_button(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
         for b in self.children:
-            b.disabled = False
+            if isinstance(b, disnake.ui.Button):
+                b.disabled = False
         button.disabled = True
-        await inter.response.send_message('soon (tm)', ephemeral=True, view=self)
+        await inter.response.send_message("soon (tm)", ephemeral=True, view=self)
 
-    @disnake.ui.button(label='All')
-    async def t_button(self, button: disnake.ui.Button, inter: disnake.MessageInteraction):
+    @disnake.ui.button(label="Mouth")
+    async def m_button(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
         for b in self.children:
-            b.disabled = False
+            if isinstance(b, disnake.ui.Button):
+                b.disabled = False
         button.disabled = True
-        await inter.response.send_message('soon (tm)', ephemeral=True, view=self)
+        await inter.response.send_message("soon (tm)", ephemeral=True, view=self)
+
+    @disnake.ui.button(label="All")
+    async def t_button(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        for b in self.children:
+            if isinstance(b, disnake.ui.Button):
+                b.disabled = False
+        button.disabled = True
+        await inter.response.send_message("soon (tm)", ephemeral=True, view=self)
 
 
 class Score(commands.Cog):
@@ -131,7 +150,7 @@ class Score(commands.Cog):
         self.bot = bot
         self.row_mapping: dict[int, ScoreRow] = {}
         ScoreRow.cog = self
-    
+
     def cog_unload(self) -> None:
         for row in self.row_mapping.values():
             row.task.cancel()
@@ -144,26 +163,30 @@ class Score(commands.Cog):
             return
         if message.author.bot:
             return
+        if not isinstance(message.author, disnake.Member):
+            return
 
         if message.author.id not in self.row_mapping:
-            print(f'for {message.author}, new entry: {message.channel.id}-{message.id}')
             row = ScoreRow(message.author, utcnow())
             row.task = self.bot.loop.create_task(row._task())
             self.row_mapping[message.author.id] = row
             return
-        
-        print(f'for {message.author}, update: {message.channel.id}-{message.id}')
+
         row = self.row_mapping[message.author.id]
         if not row.task.done():
             row.task.cancel()
             row.task = self.bot.loop.create_task(row._task())
-    
+
     @commands.slash_command()
     async def score(*_):
         pass
 
     @score.sub_command()
-    async def view(self, inter: disnake.CommandInteraction, member: disnake.Member = commands.param(lambda i: i.author)):
+    async def view(
+        self,
+        inter: disnake.CommandInteraction,
+        member: disnake.Member = commands.param(lambda i: i.author),
+    ):
         rows = await ScoreModel.filter(member__id=member.id)
         view = ScoreView(inter, member=member, rows=rows)
         await inter.response.send_message(embed=view.embed(), view=view)
