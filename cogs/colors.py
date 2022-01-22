@@ -44,7 +44,6 @@ class ColorButton(disnake.ui.Button["ColorView"]):
         super().__init__(custom_id=str(color[0]), emoji=color[2])
 
     async def callback(self, interaction: GuildMessageInteraction):
-        await interaction.response.defer()
         if int(self.custom_id) in interaction.author._roles:
             await interaction.author.remove_roles(disnake.Object(self.custom_id))
             return
@@ -53,6 +52,7 @@ class ColorButton(disnake.ui.Button["ColorView"]):
         await interaction.author.add_roles(disnake.Object(self.custom_id))
         if to_remove:
             await interaction.author.remove_roles(*(disnake.Object(role_id) for role_id in to_remove))
+        await interaction.response.defer()
 
 class ColorView(disnake.ui.View):
     def __init__(self, *, bot: Bot = None):
