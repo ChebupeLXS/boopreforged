@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+from math import log
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional
@@ -9,11 +10,26 @@ import disnake
 from disnake.utils import utcnow
 
 from db.models import Score as ScoreModel, Member as MemberModel
-from .utils.text import plural, random_chr  # type: ignore
+from .utils.text import plural, bar  # type: ignore
 
 if TYPE_CHECKING:
     from bot import Bot
 
+B1 = 10
+Q = 2
+
+def _count_level(points: int) -> float:
+    if points < B1:
+        return .0
+    if points == B1:
+        return 1.0
+    res = log(points / B1) / log(Q)
+    return res + 1
+
+def _count_score(level: int) -> int:
+    if level <= 0:
+        return 0
+    return B1 * Q**(level-1)
 
 @dataclass
 class ScoreRow:
@@ -58,11 +74,6 @@ class ScoreRow:
         self.ended_at = utcnow() - timedelta(seconds=60)
         await self.finalize()
 
-    def __repr__(self) -> str:
-        return (
-            f"<ScoreRow self.member={self.member} {self.started_at=} {self.ended_at=}>"
-        )
-
 
 class ScoreView(disnake.ui.View):
     def __init__(
@@ -81,29 +92,41 @@ class ScoreView(disnake.ui.View):
         self.day_rows = list(filter(lambda x: x.started_at >= now, rows))
 
     def embed(self):
+        score = sum([r.score for r in self.rows])
+        level = int(_count_level(score))
+        previous_frontier = _count_score(level)
+        next_frontier = _count_score(level+1)
+        percent = (score - previous_frontier) / (next_frontier - previous_frontier)
+        fill_length = int(percent * 25)
+        bar = '█' * fill_length + '\u2003' * (25 - fill_length)
+
         e = (
             disnake.Embed(
                 color=0x2F3136,
             )
             .set_author(
-                name=self.member.display_name, icon_url=self.member.display_avatar
+                name=self.member.display_name,
+                icon_url=self.member.display_avatar
             )
-            .add_field("Уровень", f"```diff\n- x-й уровень\n```")
             .add_field(
-                "Все очки",
-                f'```fix\n# {plural("очко"):{sum([r.score for r in self.rows])}}\n```',
+                "Уровень", f"```diff\n- {int(level)}-й уровень\n```"
             )
-            .add_field("До следующего уровня", f'```diff\n+ {plural("очко"):0}\n```')
+            .add_field(
+                "Все очки", f'```fix\n# {plural("очко"):{score}}\n```',
+            )
+            .add_field(
+                "До следующего уровня", f'```diff\n+ {plural("очко"):{next_frontier-score}}\n```'
+            )
         )
         if self.day_rows:
             e.add_field(
                 "За последние сутки",
-                f'```md\n# {plural("очко"):{sum([r.score for r in self.day_rows])}}\n```',
+                f"```md\n# {plural('очко'):{sum([r.score for r in self.day_rows])}}\n```",
                 inline=False,
             )
         e.add_field(
             "Прогресс",
-            f"```\n{random_chr(0x2580, 0x259F):25}| ?lvl (?%)\n```",
+            f"```\n{bar}| {level+1}lvl ({round(percent*100)}%)\n```",
             inline=False,
         )
         return e
@@ -111,7 +134,7 @@ class ScoreView(disnake.ui.View):
     async def interaction_check(self, interaction: disnake.MessageInteraction) -> bool:
         if interaction.author == self.init_inter.author:
             return True
-        await interaction.response.send_message("тебе нельзя", ephemeral=True)
+        await interaction.response.send_message("это не для тебя", ephemeral=True)
         return False
 
     @disnake.ui.button(label="Index")
