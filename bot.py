@@ -3,7 +3,7 @@ from typing import Mapping
 import traceback
 
 import disnake
-from disnake.ext import commands
+from disnake.ext import commands, tasks
 
 import db
 
@@ -39,7 +39,12 @@ class Bot(commands.Bot):
                 )
                 print(tb)
 
-        self.loop.run_until_complete(db.init(regenerate=True))
+        self.db_refresh.loop = self.loop
+        self.db_refresh.start()
+    
+    @tasks.loop(hours=2)
+    async def db_refresh(self):
+        await db.init(reconnect=True)
 
     async def on_ready(self):
         print(f"Logged on as {self.user} (ID: {self.user.id})")
