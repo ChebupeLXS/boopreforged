@@ -160,24 +160,24 @@ class Valentines(commands.Cog):
         else:
             anonymously = False
 
-        m = await m.reply('У вас есть 5 минут, чтобы написать текст валентинки. Чтобы отменить, отправьте `-`.')
+        await m.reply('У вас есть 5 минут, чтобы написать текст валентинки. Чтобы отменить, отправьте `-`.')
 
         def check(m: disnake.Message):
             return ctx.channel == m.channel and ctx.author == m.author
         try:
-            m2: disnake.Message = await self.bot.wait_for('message', check=check)
+            m_final: disnake.Message = await self.bot.wait_for('message', check=check)
         except asyncio.TimeoutError:
             await m.edit(content='Вы не успели.')
             return
-        if m2.content == '-':
-            return await m2.reply('Отмена.')
-        e = disnake.Embed(description=m2.content)
+        if m_final.content == '-':
+            return await m_final.reply('Отмена.')
+        e = disnake.Embed(description=m.content)
         e.add_field(name='Отправитель', value='Аноним' if anonymously else ctx.author.mention)
         e.add_field(name='Получатель', value=receiver.mention)
 
-        m3 = await m2.reply('Вот так будет выглядеть валентинка.. Отправлять?', embed=e)
-        await m3.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-        await m3.add_reaction('\N{CROSS MARK}')
+        m = await m_final.reply('Вот так будет выглядеть валентинка.. Отправлять?', embed=e)
+        await m.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+        await m.add_reaction('\N{CROSS MARK}')
         try:
             _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=r_check, timeout=30)
             r, u = _
@@ -186,13 +186,13 @@ class Valentines(commands.Cog):
             await m.clear_reactions()
             return
         if str(r.emoji) == '\N{CROSS MARK}':
-            await m3.reply('Валентинка сгорела в пламени камина..')
+            await m.reply('Валентинка сгорела в пламени камина..')
             return
-        await m3.reply(
+        await m.reply(
             'Валентинка была отправлена. '\
                 'Посмотреть список отправленных-полученных валентинок: `/valentine list`',
         )
-        row = await ValentinesModel.create(sender=ctx.author.id, receiver=receiver.id, anonymously=anonymously, text=m3.content)
+        row = await ValentinesModel.create(sender=ctx.author.id, receiver=receiver.id, anonymously=anonymously, text=m_final.content)
         try:
             await receiver.send(f'На ваш телефон пришло новое сообщение! Проверь, вдруг там что-то важное!'\
                 f' (`/valentine view id:{row.id}`, команду вводить на сервере, не покажется остальным в чате)')
