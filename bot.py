@@ -1,4 +1,3 @@
-import os
 from typing import Mapping
 import traceback
 
@@ -11,6 +10,7 @@ initial_extensions = (
     "cogs.colors",
     "cogs.voice_rooms",
     "cogs.score",
+    "cogs.valentines"
     "jishaku",
 )
 
@@ -44,7 +44,7 @@ class Bot(commands.Bot):
     
     @tasks.loop(hours=2)
     async def db_refresh(self):
-        await db.init(reconnect=True)
+        await db.init(reconnect=True, regenerate=True)
 
     async def on_ready(self):
         print(f"Logged on as {self.user} (ID: {self.user.id})")

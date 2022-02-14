@@ -10,6 +10,7 @@ from tortoise.fields import (
     ForeignKeyRelation,
     ReverseRelation,
     BooleanField,
+    TextField,
 )
 
 
@@ -18,10 +19,16 @@ class Member(Model):
 
     scores: ReverseRelation["Score"]
 
-
 class Score(Model):
     member: ForeignKeyRelation[Member] = ForeignKeyField("models.Member", "scores")
     score = IntField()
     started_at = DatetimeField()
     ended_at = DatetimeField(auto_now_add=True)
     dumped = BooleanField(default=False)
+
+class Valentines(Model):
+    sender = BigIntField()
+    receiver = BigIntField()
+    anonymously = BooleanField()
+    text = TextField()
+    created_at = DatetimeField(auto_now_add=True)
