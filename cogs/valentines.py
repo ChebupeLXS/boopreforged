@@ -102,6 +102,8 @@ class Valentines(commands.Cog):
             q = Q(**{type: inter.author.id})
         
         rows = await ValentinesModel.filter(q).order_by('-created_at')
+        if not len(rows):
+            return await inter.send('У вас нет валентинок.', ephemeral=True)
         view = PaginatorView(ValentineSource(inter.author.id, rows), interaction=inter)
         await view.start(ephemeral=True)
 
