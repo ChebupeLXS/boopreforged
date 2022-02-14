@@ -163,7 +163,7 @@ class Valentines(commands.Cog):
         m = await m.reply('У вас есть 5 минут, чтобы написать текст валентинки. Чтобы отменить, отправьте `-`.')
 
         def check(m: disnake.Message):
-            return ctx.channel == m.channel and ctx.author == m.activity
+            return ctx.channel == m.channel and ctx.author == m.author
         try:
             m2: disnake.Message = await self.bot.wait_for('message', check=check)
         except asyncio.TimeoutError:
