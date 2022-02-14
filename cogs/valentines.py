@@ -78,7 +78,7 @@ class Valentines(commands.Cog):
                 'Посмотреть список отправленных-полученных валентинок: `/valentine list`',
             ephemeral=True
         )
-        row = await ValentinesModel.create(sender=inter.author.id, receiver=receiver.id, anonymously=anonymously, text=modal_inter.values['text'])
+        row = await ValentinesModel.create(sender=inter.author.id, receiver=receiver.id, anonymously=anonymously, text=modal_inter.text_values['text'])
         try:
             await receiver.send(f'На ваш телефон пришло новое сообщение! Проверь, вдруг там что-то важное! (`/valentine view id:{row.id}`)')
         except disnake.HTTPException:

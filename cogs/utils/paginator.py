@@ -188,8 +188,8 @@ class PaginatorView(disnake.ui.View):
             except asyncio.TimeoutError:
                 pass
 
-            if modal_inter and modal_inter.values['page'].isdigit():
-                await self.show_checked_page(modal_inter, int(modal_inter.values['page']) - 1)
+            if modal_inter and modal_inter.text_values['page'].isdigit():
+                await self.show_checked_page(modal_inter, int(modal_inter.text_values['page']) - 1)
             else:
                 await modal_inter.response.send_message('Это не число', ephemeral=True)
 
