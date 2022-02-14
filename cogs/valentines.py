@@ -44,7 +44,7 @@ class Valentines(commands.Cog):
     ):
         """Отправить валентинку
         
-        Parameners
+        Parameters
         ----------
         receiver: Получатель валентинки
         anonymously: Отправить анонимно или нет?
