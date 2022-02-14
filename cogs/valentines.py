@@ -136,7 +136,7 @@ class Valentines(commands.Cog):
         e.add_field(name='Получатель', value=f'<@{row.receiver}>{" (анонимно)" if row.anonymously and row.sender == inter.author.id else ""}')
         await inter.response.send_message(embed=e, ephemeral=True)
     
-    @commands.command(name='valentine send')
+    @commands.command(name='send')
     @commands.dm_only()
     async def text_send(self, ctx: commands.Context, receiver: disnake.User):
         if receiver == ctx.author and ctx.author.id != self.bot.owner_id:
