@@ -88,7 +88,7 @@ class Valentines(commands.Cog):
     async def list(
         self,
         inter: disnake.CommandInteraction,
-        type: str = commands.param('all', choices={'all': 'Все (по умолчанию)', 'receiver': 'Только полученные', 'sender': 'Только отправленные'})
+        type: str = commands.param('all', choices={'Все (по умолчанию)': 'all', 'Только полученные': 'receiver', 'Только отправленные': 'sender'})
     ):
         """Список полученных и отправленных валентинок
         
