@@ -173,6 +173,7 @@ class Valentines(commands.Cog):
             return await m2.reply('Отмена.')
         e = disnake.Embed(description=m2.content)
         e.add_field(name='Отправитель', value='Аноним' if anonymously else ctx.author.mention)
+        e.add_field(name='Получатель', value=receiver.mention)
 
         m3 = await m2.reply('Вот так будет выглядеть валентинка.. Отправлять?', embed=e)
         await m3.add_reaction('\N{WHITE HEAVY CHECK MARK}')
