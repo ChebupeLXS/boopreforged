@@ -138,7 +138,11 @@ class Valentines(commands.Cog):
     
     @commands.command(name='valentine send')
     @commands.dm_only()
-    async def text_send(self, ctx: commands.Context, receiver: disnake.Member):
+    async def text_send(self, ctx: commands.Context, receiver: disnake.User):
+        if receiver == ctx.author and ctx.author.id != self.bot.owner_id:
+            return await ctx.reply('Вы не можете отправить себе валентинку.')
+        if receiver.bot:
+            return await ctx.reply('Вы не можете отправить валентинку боту.')
         m = await ctx.send('Отправить анонимно?')
         def check(r: disnake.Reaction, u: disnake.User):
             return r.message == m and not u.bot and str(r.emoji) in ('\N{WHITE HEAVY CHECK MARK}', '\N{CROSS MARK}')
