@@ -10,7 +10,7 @@ initial_extensions = (
     "cogs.colors",
     "cogs.voice_rooms",
     "cogs.score",
-    "cogs.valentines"
+    "cogs.valentines",
     "jishaku",
 )
 

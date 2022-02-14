@@ -172,7 +172,19 @@ class Score(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.row_mapping: dict[int, ScoreRow] = {}
+        self.cache: dict[int, list[ScoreModel]] = {}
         ScoreRow.cog = self
+
+
+    async def refresh(self, at=None) -> None:
+        rows: dict[int, list[ScoreModel]] = {}
+        ScoreModel.all().filter()
+        for row in await (ScoreModel.filter(ended_at__gt=at) if at else ScoreModel.all()):
+            if row.id in rows:
+                rows[row.member_id].append(row)
+            else:
+                rows[row.member_id] = [row]
+        self.cache = rows
 
     def cog_unload(self) -> None:
         for row in self.row_mapping.values():
@@ -210,10 +222,22 @@ class Score(commands.Cog):
         inter: disnake.CommandInteraction,
         member: disnake.Member = commands.param(lambda i: i.author),
     ):
+        """Посмотреть текущее количество очков человека
+
+        Parameters
+        ----------
+        member: Участник, чьё кол-во очков хотите увидеть (вы, по умолчанию)
+        """
         rows = await ScoreModel.filter(member__id=member.id)
+        
         view = ScoreView(inter, member=member, rows=rows)
         await inter.response.send_message(embed=view.embed(), view=view)
 
+    @score.sub_command()
+    async def top(self, inter: disnake.CommandInteraction):
+        """Посмотреть топ по очкам"""
+
+    
 
 def setup(bot):
     bot.add_cog(Score(bot))
