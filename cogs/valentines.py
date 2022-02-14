@@ -32,10 +32,10 @@ class Valentines(commands.Cog):
         self.bot = bot
 
     @commands.slash_command()
-    async def test(*_):
+    async def valentine(*_):
         pass
 
-    @test.sub_command()
+    @valentine.sub_command()
     async def send(
         self,
         inter: disnake.CommandInteraction,
@@ -84,7 +84,7 @@ class Valentines(commands.Cog):
         except disnake.HTTPException:
             pass
 
-    @test.sub_command()
+    @valentine.sub_command()
     async def list(
         self,
         inter: disnake.CommandInteraction,
@@ -105,7 +105,7 @@ class Valentines(commands.Cog):
         view = PaginatorView(ValentineSource(inter.author.id, rows), interaction=inter)
         await view.start(ephemeral=True)
 
-    @test.sub_command()
+    @valentine.sub_command()
     async def view(
         self,
         inter: disnake.CommandInteraction,
