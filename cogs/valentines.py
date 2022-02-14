@@ -144,12 +144,12 @@ class Valentines(commands.Cog):
         if receiver.bot:
             return await ctx.reply('Вы не можете отправить валентинку боту.')
         m = await ctx.send('Отправить анонимно?')
-        def check(r: disnake.Reaction, u: disnake.User):
+        def r_check(r: disnake.Reaction, u: disnake.User):
             return r.message == m and not u.bot and str(r.emoji) in ('\N{WHITE HEAVY CHECK MARK}', '\N{CROSS MARK}')
         await m.add_reaction('\N{WHITE HEAVY CHECK MARK}')
         await m.add_reaction('\N{CROSS MARK}')
         try:
-            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=check, timeout=30)
+            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=r_check, timeout=30)
             r, u = _
         except asyncio.TimeoutError:
             await m.edit(content='Слишком долго')
@@ -179,7 +179,7 @@ class Valentines(commands.Cog):
         await m3.add_reaction('\N{WHITE HEAVY CHECK MARK}')
         await m3.add_reaction('\N{CROSS MARK}')
         try:
-            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=check, timeout=30)
+            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=r_check, timeout=30)
             r, u = _
         except asyncio.TimeoutError:
             await m.edit(content='Слишком долго')
