@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from disnake.ext import commands
@@ -80,7 +81,8 @@ class Valentines(commands.Cog):
         )
         row = await ValentinesModel.create(sender=inter.author.id, receiver=receiver.id, anonymously=anonymously, text=modal_inter.text_values['text'])
         try:
-            await receiver.send(f'На ваш телефон пришло новое сообщение! Проверь, вдруг там что-то важное! (`/valentine view id:{row.id}`)')
+            await receiver.send(f'На ваш телефон пришло новое сообщение! Проверь, вдруг там что-то важное!'\
+                f' (`/valentine view id:{row.id}`, команду вводить на сервере, не покажется остальным в чате)')
         except disnake.HTTPException:
             pass
 
@@ -133,6 +135,69 @@ class Valentines(commands.Cog):
             e.add_field(name='Отправитель', value=f'<@{row.sender}>')
         e.add_field(name='Получатель', value=f'<@{row.receiver}>{" (анонимно)" if row.anonymously and row.sender == inter.author.id else ""}')
         await inter.response.send_message(embed=e, ephemeral=True)
+    
+    @commands.command(name='valentine send')
+    @commands.dm_only()
+    async def text_send(self, ctx: commands.Context, receiver: disnake.Member):
+        m = await ctx.send('Отправить анонимно?')
+        def check(r: disnake.Reaction, u: disnake.User):
+            return r.message == m and not u.bot and str(r.emoji) in ('\N{WHITE HEAVY CHECK MARK}', '\N{CROSS MARK}')
+        await m.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+        await m.add_reaction('\N{CROSS MARK}')
+        try:
+            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=check, timeout=30)
+            r, u = _
+        except asyncio.TimeoutError:
+            await m.edit(content='Слишком долго')
+            await m.clear_reactions()
+            return
+        if str(r.emoji) == '\N{WHITE HEAVY CHECK MARK}':
+            anonymously = True
+        else:
+            anonymously = False
+
+        m = await m.reply('У вас есть 5 минут, чтобы написать текст валентинки. Чтобы отменить, отправьте `-`.')
+
+        def check(m: disnake.Message):
+            return ctx.channel == m.channel and ctx.author == m.activity
+        try:
+            m2: disnake.Message = await self.bot.wait_for('message', check=check)
+        except asyncio.TimeoutError:
+            await m.edit(content='Вы не успели.')
+            return
+        if m2.content == '-':
+            return await m2.reply('Отмена.')
+        e = disnake.Embed(description=m2.content)
+        e.add_field(name='Отправитель', value='Аноним' if anonymously else ctx.author.mention)
+
+        m3 = await m2.reply('Вот так будет выглядеть валентинка.. Отправлять?', embed=e)
+        await m3.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+        await m3.add_reaction('\N{CROSS MARK}')
+        try:
+            _: tuple[disnake.Reaction, disnake.User] = await self.bot.wait_for('reaction_add', check=check, timeout=30)
+            r, u = _
+        except asyncio.TimeoutError:
+            await m.edit(content='Слишком долго')
+            await m.clear_reactions()
+            return
+        if str(r.emoji) == '\N{CROSS MARK}':
+            await m3.reply('Валентинка сгорела в пламени камина..')
+            return
+        await m3.reply(
+            'Валентинка была отправлена. '\
+                'Посмотреть список отправленных-полученных валентинок: `/valentine list`',
+        )
+        row = await ValentinesModel.create(sender=ctx.author.id, receiver=receiver.id, anonymously=anonymously, text=m3.content)
+        try:
+            await receiver.send(f'На ваш телефон пришло новое сообщение! Проверь, вдруг там что-то важное!'\
+                f' (`/valentine view id:{row.id}`, команду вводить на сервере, не покажется остальным в чате)')
+        except disnake.HTTPException:
+            pass
+
+    @text_send.error
+    async def text_send_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.reply('только в лс ок?')
 
 def setup(bot):
     bot.add_cog(Valentines(bot))
