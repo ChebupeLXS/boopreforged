@@ -35,7 +35,7 @@ class VoiceRooms(commands.Cog, name="Войсчаты"):  # type: ignore
                 category=disnake.Object(CATEGORY_ID),  # type: ignore
                 overwrites={
                     member: disnake.PermissionOverwrite(
-                        manage_channels=True, speak=True, connect=True
+                        manage_channels=True, speak=True, connect=True, manage_permissions=True
                     )
                 },
             )
